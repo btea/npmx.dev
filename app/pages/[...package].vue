@@ -66,6 +66,7 @@ const {
 onMounted(() => fetchInstallSize())
 
 const { data: packageAnalysis } = usePackageAnalysis(packageName, requestedVersion)
+const { data: moduleReplacement } = useModuleReplacement(packageName)
 
 const { data: pkg, status, error } = await usePackage(packageName, requestedVersion)
 const resolvedVersion = computed(() => pkg.value?.resolvedVersion ?? null)
@@ -1201,8 +1202,10 @@ function handleClick(event: MouseEvent) {
         </div>
       </section>
 
-      <!-- Vulnerability scan - full width -->
-      <div class="area-vulns">
+      <div class="area-vulns space-y-6">
+        <!-- Bad package warning -->
+        <PackageReplacement v-if="moduleReplacement" :replacement="moduleReplacement" />
+        <!-- Vulnerability scan -->
         <ClientOnly>
           <PackageVulnerabilityTree
             v-if="displayVersion"
