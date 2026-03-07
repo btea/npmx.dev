@@ -36,12 +36,20 @@ function getFileRoute(nodePath: string): RouteLocationRaw {
 
 const { toggleDir, isExpanded, autoExpandAncestors } = useFileTreeState(props.baseUrl)
 
+const scrollIntoView = () => {
+  const el = document.querySelector('[aria-current="true"]') as HTMLElement
+  if (el) {
+    el.scrollIntoView({ block: 'center' })
+  }
+}
+
 // Auto-expand directories in the current path
 watch(
   () => props.currentPath,
   path => {
     if (path) {
       autoExpandAncestors(path)
+      nextTick(scrollIntoView)
     }
   },
   { immediate: true },
