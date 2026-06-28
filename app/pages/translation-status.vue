@@ -8,12 +8,15 @@ useSeoMeta({
   description: () => $t('translation_status.welcome', { npmx: 'npmx' }),
 })
 
-defineOgImageComponent('Default', {
-  title: () => $t('translation_status.title'),
-  description: () => $t('translation_status.welcome', { npmx: 'npmx' }),
-})
+defineOgImage(
+  'Page.takumi',
+  {
+    title: () => $t('translation_status.title'),
+    description: () => $t('translation_status.welcome', { npmx: 'npmx' }),
+  },
+  { alt: () => `${$t('translation_status.title')} — npmx` },
+)
 
-const nuxt = useNuxtApp()
 const router = useRouter()
 const canGoBack = useCanGoBack()
 const { fetchStatus, status } = useI18nStatus()
@@ -24,14 +27,7 @@ const isLoading = computed<boolean>(
   () => fetchStatus.value === 'idle' || fetchStatus.value === 'pending',
 )
 
-const generatedAt = computed(() => {
-  const gat = status.value?.generatedAt
-  if (import.meta.client) {
-    return (nuxt.isHydrated ? new Date().toISOString() : gat) ?? new Date().toISOString()
-  }
-
-  return gat ?? new Date().toISOString()
-})
+const generatedAt = computed(() => status.value?.generatedAt)
 
 const localeEntries = computed<I18nLocaleStatus[]>(() => status.value?.locales || [])
 
@@ -64,16 +60,16 @@ ${template}`
             <span class="sr-only sm:not-sr-only">{{ $t('nav.back') }}</span>
           </button>
         </div>
-        <i18n-t
-          keypath="translation_status.generated_at"
-          tag="p"
-          scope="global"
-          class="text-fg-muted text-lg"
-        >
-          <template #date>
-            <NuxtTime :locale :datetime="generatedAt" date-style="long" time-style="medium" />
+        <p class="text-fg-muted text-lg">
+          <template v-if="isLoading || !generatedAt">
+            <SkeletonInline class="h-6 w-96" />
           </template>
-        </i18n-t>
+          <i18n-t v-else keypath="translation_status.generated_at" tag="span" scope="global">
+            <template #date>
+              <NuxtTime :locale :datetime="generatedAt" date-style="long" time-style="medium" />
+            </template>
+          </i18n-t>
+        </p>
       </header>
 
       <p class="text-fg-muted leading-relaxed mb-4">
@@ -186,7 +182,7 @@ ${template}`
                   <h4 class="text-sm font-medium text-fg my-0">
                     {{ $t('translation_status.missing_keys', {}, { locale: localeEntry.lang }) }}
                   </h4>
-                  <ButtonBase type="button" size="small" @click="copyMissingKeys(localeEntry)">
+                  <ButtonBase type="button" size="sm" @click="copyMissingKeys(localeEntry)">
                     {{
                       copied
                         ? $t('common.copied', {}, { locale: localeEntry.lang })
@@ -209,11 +205,7 @@ ${template}`
                   </ul>
                 </div>
                 <div class="mt-4">
-                  <LinkBase
-                    :to="localeEntry.githubEditUrl"
-                    variant="button-secondary"
-                    size="medium"
-                  >
+                  <LinkBase :to="localeEntry.githubEditUrl" variant="button-secondary" size="md">
                     {{ $t('i18n.edit_on_github', {}, { locale: localeEntry.lang }) }}
                   </LinkBase>
                 </div>
