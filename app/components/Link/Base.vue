@@ -36,6 +36,9 @@ const props = withDefaults(
     /** Link destination (internal or external URL) */
     to?: NuxtLinkProps['to']
 
+    /**
+     * Link name used to trigger package-aware routing for compare links
+     */
     name?: string
 
     /** always use `to` instead of `href` */
