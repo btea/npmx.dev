@@ -36,6 +36,8 @@ const props = withDefaults(
     /** Link destination (internal or external URL) */
     to?: NuxtLinkProps['to']
 
+    name?: string
+
     /** always use `to` instead of `href` */
     href?: never
 
@@ -69,8 +71,27 @@ const isButtonMedium = computed(() => props.size === 'md' && !isLink.value)
 const slots = useSlots()
 const iconOnly = computed(() => !!props.classicon && !slots.default)
 const keyboardShortcutsEnabled = useKeyboardShortcuts()
-</script>
 
+const { packageName } = usePackageRoute()
+
+const linkTo = computed(() => {
+  if (props.name?.toLocaleLowerCase() !== 'compare' || !packageName.value) {
+    return props.to
+  }
+  // On a package page (/package/:name), carry the current package name to the compare page
+  if (typeof props.to !== 'object' || props.to === null) {
+    return props.to
+  }
+  const to = { ...props.to } as Record<string, any>
+  return {
+    ...to,
+    query: {
+      ...to.query,
+      packages: packageName.value,
+    },
+  }
+})
+</script>
 <template>
   <span
     v-if="disabled"
@@ -121,7 +142,7 @@ const keyboardShortcutsEnabled = useKeyboardShortcuts()
       'text-bg bg-fg hover:(bg-fg/50 text-accent) focus-visible:(bg-fg/50) aria-current:(bg-fg text-bg border-fg hover:enabled:(text-bg/50))':
         variant === 'button-primary',
     }"
-    :to="to"
+    :to="linkTo"
     :aria-keyshortcuts="keyboardShortcutsEnabled ? ariaKeyshortcuts : undefined"
     :target="isLinkExternal ? '_blank' : undefined"
   >

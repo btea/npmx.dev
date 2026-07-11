@@ -324,6 +324,7 @@ useShortcuts({
           class="border-none"
           variant="button-secondary"
           :to="link.to"
+          :name="link.name"
           :aria-keyshortcuts="link.keyshortcut"
         >
           {{ link.label }}
