@@ -20,13 +20,17 @@ const { isConnected, npmUser } = useConnector()
 
 const { packageName } = usePackageRoute()
 
+const compareTarget = computed(() =>
+  packageName.value
+    ? { name: 'compare' as const, query: { packages: packageName.value } }
+    : { name: 'compare' as const },
+)
+
 const desktopLinks = computed<NavigationConfig>(() => [
   {
     name: 'Compare',
     label: $t('nav.compare'),
-    to: packageName.value
-      ? { name: 'compare', query: { packages: packageName.value } }
-      : { name: 'compare' },
+    to: compareTarget.value,
     keyshortcut: 'c',
     type: 'link',
     external: false,
@@ -213,7 +217,7 @@ function handleSearchFocus() {
 }
 
 useShortcuts({
-  'c': () => ({ name: 'compare' }),
+  'c': () => compareTarget.value,
   ',': () => ({ name: 'settings' }),
 })
 </script>

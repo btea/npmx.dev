@@ -209,7 +209,6 @@ useShortcuts({
   '.': () => codeLink.value,
   'm': () => mainLink.value,
   'd': () => docsLink.value,
-  'c': () => props.pkg && { name: 'compare' as const, query: { packages: props.pkg.name } },
   'f': () => diffLink.value,
   '-': () => changelogLink.value,
   't': () => timelineLink.value,
