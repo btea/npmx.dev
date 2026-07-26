@@ -18,11 +18,15 @@ withDefaults(
 
 const { isConnected, npmUser } = useConnector()
 
+const { packageName } = usePackageRoute()
+
 const desktopLinks = computed<NavigationConfig>(() => [
   {
     name: 'Compare',
     label: $t('nav.compare'),
-    to: { name: 'compare' },
+    to: packageName.value
+      ? { name: 'compare', query: { packages: packageName.value } }
+      : { name: 'compare' },
     keyshortcut: 'c',
     type: 'link',
     external: false,
@@ -324,7 +328,6 @@ useShortcuts({
           class="border-none"
           variant="button-secondary"
           :to="link.to"
-          :name="link.name"
           :aria-keyshortcuts="link.keyshortcut"
         >
           {{ link.label }}

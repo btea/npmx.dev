@@ -228,14 +228,6 @@ useShortcuts({
       </CopyToClipboardButton>
       <!-- Package metrics -->
       <div class="flex gap-2 flex-wrap items-stretch">
-        <LinkBase
-          variant="button-secondary"
-          :to="{ name: 'compare', query: { packages: packageName } }"
-          aria-keyshortcuts="c"
-          classicon="i-lucide:git-compare"
-        >
-          <span class="max-sm:sr-only">{{ $t('package.links.compare_this_package') }}</span>
-        </LinkBase>
         <PackageLikes :packageName />
 
         <LinkBase
