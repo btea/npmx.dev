@@ -11,6 +11,7 @@ export interface TimelineVersion {
   hasTypes?: boolean
   hasTrustedPublisher?: boolean
   hasProvenance?: boolean
+  deprecated?: string
   tags: string[]
 }
 
@@ -79,6 +80,7 @@ export default defineCachedEventHandler(
             // oxlint-disable-next-line eslint/no-underscore-dangle
             hasTrustedPublisher: version._npmUser?.trustedPublisher ? true : undefined,
             hasProvenance: version.dist?.attestations ? true : undefined,
+            deprecated: version.deprecated || undefined,
             tags: tagsByVersion.get(v) ?? [],
           }
         })

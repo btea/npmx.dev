@@ -1942,6 +1942,21 @@
             "provenance_removed": {
               "type": "string"
             },
+            "deprecated": {
+              "type": "string"
+            },
+            "time_gap": {
+              "type": "string"
+            },
+            "time_gap_days": {
+              "type": "string"
+            },
+            "time_gap_months": {
+              "type": "string"
+            },
+            "time_gap_years": {
+              "type": "string"
+            },
             "chart": {
               "type": "object",
               "properties": {

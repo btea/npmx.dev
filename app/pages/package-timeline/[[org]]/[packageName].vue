@@ -174,6 +174,19 @@ if (import.meta.client) {
 
 const bytesFormatter = useBytesFormatter()
 
+// Format a duration (in days) into a localized human-readable string
+function formatDuration(days: number): string {
+  if (days < 30) return $t('package.timeline.time_gap_days', { count: days }, days)
+  if (days < 365)
+    return $t(
+      'package.timeline.time_gap_months',
+      { count: Math.floor(days / 30) },
+      Math.floor(days / 30),
+    )
+  const years = Math.floor(days / 365)
+  return $t('package.timeline.time_gap_years', { count: years }, years)
+}
+
 // Detect notable changes between consecutive versions (size, license, ESM, types)
 // Versions are compared against their semver predecessor, not chronological neighbor,
 // so interleaved legacy releases don't produce misleading cross-line diffs.
@@ -189,10 +202,31 @@ const versionSubEvents = computed(() => {
   }
 
   for (const current of entries) {
-    const previous = prevBySemver.get(current.version)
-    if (!previous) continue
-
     const events: SubEvent[] = []
+
+    // Time gap from the previous chronological release
+    // entries are sorted newest-first by publish time, so index+1 is the predecessor
+    const chronologicalIndex = entries.indexOf(current)
+    const prevRelease = entries[chronologicalIndex + 1]
+    if (prevRelease) {
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+      const gapMs = Date.parse(current.time) - Date.parse(prevRelease.time)
+      if (gapMs > SEVEN_DAYS_MS) {
+        const gapDays = Math.floor(gapMs / (1000 * 60 * 60 * 24))
+        events.push({
+          key: 'timeGap',
+          positive: false,
+          icon: 'i-lucide:clock',
+          text: $t('package.timeline.time_gap', { duration: formatDuration(gapDays) }),
+        })
+      }
+    }
+
+    const previous = prevBySemver.get(current.version)
+    if (!previous) {
+      if (events.length) result.set(current.version, events)
+      continue
+    }
 
     // Size changes
     const currentSize = sizeCache.get(sizeKey(current.version))
@@ -332,6 +366,13 @@ const versionSubEvents = computed(() => {
   return result
 })
 
+// The latest deprecated version — the first deprecated entry by publish time.
+// npm registry doesn't record a separate deprecation timestamp, so the badge
+// is shown once on the newest deprecated release only.
+const latestDeprecatedVersion = computed(
+  () => timelineEntries.value.find(e => e.deprecated) ?? null,
+)
+
 const selectedVersion = shallowRef<string | null>(null)
 
 useSeoMeta({
@@ -375,7 +416,7 @@ useSeoMeta({
             :class="entry.version === version ? 'bg-accent border-accent' : 'bg-bg-subtle'"
           />
           <!-- Content -->
-          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <LinkBase
               :to="packageRoute(entry.version)"
               class="text-sm font-medium"
@@ -396,6 +437,13 @@ useSeoMeta({
             >
               {{ tag }}
             </span>
+            <span
+              v-if="latestDeprecatedVersion?.version === entry.version"
+              class="inline-flex items-center gap-1 text-3xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400"
+            >
+              <span class="i-lucide:octagon-alert w-3 h-3 shrink-0" aria-hidden="true" />
+              {{ $t('package.timeline.deprecated') }}
+            </span>
             <DateTime
               :datetime="entry.time"
               class="text-xs text-fg-subtle"
@@ -406,31 +454,51 @@ useSeoMeta({
           </div>
           <!-- Sub-events -->
           <ol
-            v-if="versionSubEvents.has(entry.version)"
+            v-if="
+              versionSubEvents.has(entry.version) ||
+              latestDeprecatedVersion?.version === entry.version
+            "
             class="relative border-s border-border/50 ms-3 mt-2"
           >
+            <template v-if="versionSubEvents.has(entry.version)">
+              <li
+                v-for="ev in versionSubEvents.get(entry.version)"
+                :key="ev.key"
+                class="mb-2 ms-4 relative last:mb-0"
+              >
+                <span
+                  class="absolute -start-[1.375rem] top-0.5 flex items-center justify-center w-3 h-3 rounded-full border"
+                  :class="
+                    ev.positive ? 'bg-green-500 border-green-600' : 'bg-amber-500 border-amber-600'
+                  "
+                >
+                  <span class="w-2 h-2 text-white" :class="ev.icon" aria-hidden="true" />
+                </span>
+                <p
+                  class="text-xs"
+                  :class="
+                    ev.positive
+                      ? 'text-green-700 dark:text-green-400'
+                      : 'text-amber-700 dark:text-amber-400'
+                  "
+                >
+                  {{ ev.text }}
+                </p>
+              </li>
+            </template>
+            <!-- Deprecated message (only on the latest deprecated version) -->
             <li
-              v-for="ev in versionSubEvents.get(entry.version)"
-              :key="ev.key"
-              class="mb-2 ms-4 relative last:mb-0"
+              v-if="latestDeprecatedVersion?.version === entry.version"
+              class="ms-4 relative"
+              :class="versionSubEvents.has(entry.version) ? 'mt-2' : ''"
             >
               <span
-                class="absolute -start-[1.375rem] top-0.5 flex items-center justify-center w-3 h-3 rounded-full border"
-                :class="
-                  ev.positive ? 'bg-green-500 border-green-600' : 'bg-amber-500 border-amber-600'
-                "
+                class="absolute -start-[1.375rem] top-0.5 flex items-center justify-center w-3 h-3 rounded-full border bg-red-500 border-red-600"
               >
-                <span class="w-2 h-2 text-white" :class="ev.icon" aria-hidden="true" />
+                <span class="w-2 h-2 text-white i-lucide:octagon-alert" aria-hidden="true" />
               </span>
-              <p
-                class="text-xs"
-                :class="
-                  ev.positive
-                    ? 'text-green-700 dark:text-green-400'
-                    : 'text-amber-700 dark:text-amber-400'
-                "
-              >
-                {{ ev.text }}
+              <p class="text-xs text-red-700 dark:text-red-400">
+                {{ entry.deprecated }}
               </p>
             </li>
           </ol>
