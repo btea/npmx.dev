@@ -332,13 +332,6 @@ const versionSubEvents = computed(() => {
   return result
 })
 
-// The latest deprecated version — the first deprecated entry by publish time.
-// npm registry doesn't record a separate deprecation timestamp, so the badge
-// is shown once on the newest deprecated release only.
-const latestDeprecatedVersion = computed(
-  () => timelineEntries.value.find(e => e.deprecated) ?? null,
-)
-
 const selectedVersion = shallowRef<string | null>(null)
 
 useSeoMeta({
@@ -404,7 +397,7 @@ useSeoMeta({
               {{ tag }}
             </span>
             <span
-              v-if="latestDeprecatedVersion?.version === entry.version"
+              v-if="entry.deprecated"
               class="inline-flex items-center gap-1 text-3xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400"
             >
               <span class="i-lucide:octagon-alert w-3 h-3 shrink-0" aria-hidden="true" />
@@ -420,10 +413,7 @@ useSeoMeta({
           </div>
           <!-- Sub-events -->
           <ol
-            v-if="
-              versionSubEvents.has(entry.version) ||
-              latestDeprecatedVersion?.version === entry.version
-            "
+            v-if="versionSubEvents.has(entry.version) || entry.deprecated"
             class="relative border-s border-border/50 ms-3 mt-2"
           >
             <template v-if="versionSubEvents.has(entry.version)">
@@ -452,9 +442,9 @@ useSeoMeta({
                 </p>
               </li>
             </template>
-            <!-- Deprecated message (only on the latest deprecated version) -->
+            <!-- Deprecated message (on every deprecated version, matching the versions page) -->
             <li
-              v-if="latestDeprecatedVersion?.version === entry.version"
+              v-if="entry.deprecated"
               class="ms-4 relative"
               :class="versionSubEvents.has(entry.version) ? 'mt-2' : ''"
             >
