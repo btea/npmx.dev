@@ -556,7 +556,6 @@
       "chart": {
         "copy_alt": {}
       },
-      "deprecated": "已棄用",
       "time_gap": "距上一版本 {duration}",
       "time_gap_days": "{count} 天",
       "time_gap_months": "{count} 個月",
